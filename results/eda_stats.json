@@ -1,0 +1,28 @@
+{
+  "instrument": "AAPL.US/USD (CFD, Dukascopy)",
+  "timezone": "UTC (GMT)",
+  "n_obs": 251,
+  "period": [
+    "2025-10-28",
+    "2026-10-27"
+  ],
+  "test_period": [
+    "2026-07-28",
+    "2026-10-27"
+  ],
+  "close_min": 246.526,
+  "close_max": 348.147,
+  "close_first": 269.006,
+  "close_last": 347.037,
+  "mean_daily_logret_pct": 0.10187908732749733,
+  "daily_vol_pct": 1.5268144018279977,
+  "annual_vol_pct": 24.23742723233234,
+  "skew": -0.7185376571900738,
+  "excess_kurtosis": 4.237148278504093,
+  "share_up_days_pct": 53.2,
+  "adf_p_logprice": 0.8641373578678172,
+  "adf_p_returns": 4.438373981434816e-28,
+  "ljungbox_p_lag5": 0.5635384935130573,
+  "ljungbox_p_lag10": 0.4963738538840815,
+  "acf_returns_lag1": 0.026840295316616865
+}
