@@ -1,0 +1,45 @@
+{
+  "source_file": "aaplususd-d1-bid-2025-10-28-2026-10-28.csv",
+  "source_sha256": "3b76bd28fb128130d0956195e21feaffcb2fc0931ecfe9ef50f232e98e862c7e",
+  "rows": 251,
+  "period": [
+    "2025-10-28",
+    "2026-10-27"
+  ],
+  "test_origins": 60,
+  "first_origin": "2026-07-28",
+  "last_origin": "2026-10-20",
+  "horizons": [
+    1,
+    5
+  ],
+  "refit_every": {
+    "Naive": 1,
+    "Drift": 1,
+    "ARIMA": 1,
+    "ETS": 1,
+    "LightGBM": 1,
+    "GRU": 5
+  },
+  "seeds": {
+    "main": 42,
+    "nn": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "python": "3.13.18",
+  "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39",
+  "versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scipy": "1.18.1",
+    "statsmodels": "0.15.0",
+    "lightgbm": "4.7.0",
+    "torch": "2.15.0+cu132",
+    "matplotlib": "3.11.2"
+  }
+}

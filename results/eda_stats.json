@@ -15,14 +15,14 @@
   "close_first": 269.006,
   "close_last": 347.037,
   "mean_daily_logret_pct": 0.10187908732749733,
-  "daily_vol_pct": 1.5268144018279977,
-  "annual_vol_pct": 24.23742723233234,
-  "skew": -0.7185376571900738,
-  "excess_kurtosis": 4.237148278504093,
+  "daily_vol_pct": 1.5268144018279979,
+  "annual_vol_pct": 24.237427232332344,
+  "skew": -0.7185376571900733,
+  "excess_kurtosis": 4.237148278504094,
   "share_up_days_pct": 53.2,
-  "adf_p_logprice": 0.8641373578678172,
-  "adf_p_returns": 4.438373981434816e-28,
-  "ljungbox_p_lag5": 0.5635384935130573,
-  "ljungbox_p_lag10": 0.4963738538840815,
-  "acf_returns_lag1": 0.026840295316616865
+  "adf_p_logprice": 0.8641373578678159,
+  "adf_p_returns": 4.438373981434881e-28,
+  "ljungbox_p_lag5": 0.5635384935130577,
+  "ljungbox_p_lag10": 0.4963738538840843,
+  "acf_returns_lag1": 0.02684029531661675
 }

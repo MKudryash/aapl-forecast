@@ -19,5 +19,5 @@ if ! ls data/raw/*.csv >/dev/null 2>&1; then
 fi
 
 echo ">> Запускаю эксперимент"
-python src/run_all.py
+python src/run_all.py   # ~4 минуты, в конце проверка на утечку
 echo ">> Готово: таблицы в results/, графики в results/figures/"

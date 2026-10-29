@@ -1,0 +1,35 @@
+{
+  "origins_checked": [
+    "2026-07-28",
+    "2026-09-09",
+    "2026-10-20"
+  ],
+  "models": {
+    "Naive": {
+      "max_abs_diff_usd": 0.0,
+      "passed": true
+    },
+    "Drift": {
+      "max_abs_diff_usd": 0.0,
+      "passed": true
+    },
+    "ARIMA": {
+      "max_abs_diff_usd": 0.0,
+      "passed": true
+    },
+    "ETS": {
+      "max_abs_diff_usd": 0.0,
+      "passed": true
+    },
+    "LightGBM": {
+      "max_abs_diff_usd": 0.0,
+      "passed": true
+    },
+    "GRU": {
+      "max_abs_diff_usd": 0.0,
+      "passed": true
+    }
+  },
+  "features_independent_of_future": true,
+  "all_passed": true
+}

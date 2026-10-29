@@ -1,10 +1,14 @@
 {
   "rows_raw": 251,
-  "duplicates_removed": 0,
+  "outside_period_removed": 0,
   "weekend_rows_removed": 0,
   "flat_nontrading_removed": 0,
   "flat_nontrading_dates": [],
-  "invalid_rows_removed": 0,
+  "ohlc_checks_passed": true,
+  "period": [
+    "2025-10-28",
+    "2026-10-27"
+  ],
   "missing_weekdays": [
     "2025-11-27",
     "2025-12-25",
@@ -17,10 +21,8 @@
     "2026-07-03",
     "2026-09-07"
   ],
+  "missing_weekdays_are_exchange_holidays": true,
   "rows_clean": 251,
-  "period": [
-    "2025-10-28",
-    "2026-10-27"
-  ],
-  "source_file": "aaplususd-d1-bid-2025-10-28-2026-10-28.csv"
+  "source_file": "aaplususd-d1-bid-2025-10-28-2026-10-28.csv",
+  "source_sha256": "3b76bd28fb128130d0956195e21feaffcb2fc0931ecfe9ef50f232e98e862c7e"
 }

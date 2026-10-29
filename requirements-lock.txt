@@ -1,0 +1,9 @@
+# Точные версии, на которых получены результаты в results/ (Python 3.13)
+# Установка: pip install -r requirements-lock.txt  (нужен Python 3.11+)
+numpy==2.5.3
+pandas==3.0.5
+scipy==1.18.1
+statsmodels==0.15.0
+lightgbm==4.7.0
+torch==2.15.0
+matplotlib==3.11.2
