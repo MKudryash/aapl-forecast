@@ -1,11 +1,11 @@
-"""Walk-forward валидация, метрики и тест Диболда-Мариано."""
+"""Walk-forward валидация, метрики, тест Диболда-Мариано и блочный bootstrap."""
 import time
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-from config import HORIZONS, H_MAX, TEST_SIZE
+from config import HORIZONS, H_MAX, TEST_SIZE, BOOTSTRAP_REPEATS, BOOTSTRAP_BLOCKS
 
 
 def test_origins(n, test_size=TEST_SIZE):
@@ -94,4 +94,44 @@ def dm_vs_baseline(pred, baseline="Naive"):
             for power, loss in ((2, "MSE"), (1, "MAE")):
                 s, p = dm_test(e, e_ref, h, power)
                 rows.append(dict(model=m, h=h, loss=loss, DM=s, p_value=p))
+    return pd.DataFrame(rows)
+
+
+def block_bootstrap_ci(d, block=5, repeats=BOOTSTRAP_REPEATS, seed=2026, level=0.95):
+    """Круговой блочный bootstrap (circular moving block) для среднего ряда d.
+    Ряд нарезается на блоки подряд идущих значений длиной block, блоки выбираются
+    с возвращением (с "заворотом" через конец ряда), из них собирается новый ряд той же длины.
+    Блоки сохраняют автокорреляцию соседних ошибок (перекрывающиеся 5-дневные прогнозы)."""
+    rng = np.random.default_rng(seed)
+    d = np.asarray(d, dtype=float)
+    n = len(d)
+    k = int(np.ceil(n / block))
+    starts = rng.integers(0, n, size=(repeats, k))
+    idx = (starts[:, :, None] + np.arange(block)) % n
+    means = d[idx.reshape(repeats, -1)[:, :n]].mean(axis=1)
+    a = (1 - level) / 2
+    lo, hi = np.quantile(means, [a, 1 - a])
+    return float(lo), float(hi)
+
+
+def bootstrap_vs_baseline(pred, baseline="Naive", blocks=BOOTSTRAP_BLOCKS):
+    """95% интервал для ΔMAE = MAE(модель) - MAE(baseline).
+    Интервал целиком ниже 0 -- модель точнее; целиком выше 0 -- хуже; содержит 0 -- различие не доказано."""
+    rows = []
+    for h in HORIZONS:
+        ref = pred[(pred.model == baseline) & (pred.h == h)].sort_values("origin")
+        ae_ref = (ref.y_pred - ref.y_true).abs().values
+        for m in pred.model.unique():
+            if m == baseline:
+                continue
+            g = pred[(pred.model == m) & (pred.h == h)].sort_values("origin")
+            d = (g.y_pred - g.y_true).abs().values - ae_ref
+            for b in blocks:
+                if np.allclose(d, 0, atol=1e-6):
+                    lo = hi = 0.0
+                else:
+                    lo, hi = block_bootstrap_ci(d, block=b)
+                verdict = "лучше" if hi < 0 else ("хуже" if lo > 0 else "не различимо")
+                rows.append(dict(model=m, h=h, block=b, delta_MAE=float(d.mean()),
+                                 ci_low=lo, ci_high=hi, verdict=verdict))
     return pd.DataFrame(rows)

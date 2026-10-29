@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from config import H_MAX, VAL_SIZE, SEED, NN_SEEDS
+from config import H_MAX, VAL_SIZE, SEED, NN_SEEDS, REFIT_EVERY
 from features import make_features, make_targets
 
 warnings.filterwarnings("ignore")
@@ -268,10 +268,6 @@ class GRU:
 
 
 def all_models():
-    """Модели основного эксперимента и частота переобучения (в точках прогноза)."""
-    return [
-        (Naive(), 1), (Drift(), 1),
-        (ARIMA(), 1), (ETS(), 1),
-        (LightGBM(), 5),
-        (GRU(), 20),
-    ]
+    """Модели основного эксперимента и частота переобучения (в точках прогноза, см. config.REFIT_EVERY)."""
+    models = [Naive(), Drift(), ARIMA(), ETS(), LightGBM(), GRU()]
+    return [(m, REFIT_EVERY[m.name]) for m in models]

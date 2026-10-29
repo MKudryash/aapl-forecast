@@ -1,8 +1,10 @@
-"""Полный воспроизводимый прогон: очистка -> EDA -> walk-forward -> метрики -> устойчивость -> графики.
+"""Полный воспроизводимый прогон: очистка -> EDA -> walk-forward -> метрики -> устойчивость ->
+проверка на утечку -> графики -> автоматический отчет results/REPORT.md.
 
 Запуск из корня репозитория:  python src/run_all.py
 """
 import json
+import platform
 import sys
 
 import matplotlib
@@ -15,9 +17,13 @@ from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.tsa.stattools import adfuller
 
 import data as data_mod
+import check_leakage
+import config
 from config import (DATA_RAW, DATA_CLEAN, RESULTS, FIGURES, HORIZONS, TEST_SIZE,
-                    ROLLING_WINDOW, INSTRUMENT, TIMEZONE, H_MAX)
-from evaluation import walk_forward, metric_table, metrics, dm_vs_baseline, test_origins
+                    ROLLING_WINDOW, INSTRUMENT, TIMEZONE, H_MAX, REFIT_EVERY)
+from evaluation import (walk_forward, metric_table, metrics, dm_vs_baseline, test_origins,
+                        bootstrap_vs_baseline)
+from report import write_report
 from models import all_models, Drift, ARIMA, ETS, LightGBM, GRU
 
 plt.rcParams.update({"figure.dpi": 120, "axes.grid": True, "grid.alpha": 0.3})
@@ -123,6 +129,40 @@ def plot_seeds(mem_mt, ens_mt):
     fig.tight_layout(); fig.savefig(FIGURES / "06_gru_seeds.png"); plt.close(fig)
 
 
+def plot_bootstrap(boot):
+    b = boot[boot.block == 5]
+    fig, axes = plt.subplots(1, len(HORIZONS), figsize=(12, 3.6), sharey=True)
+    for ax, h in zip(axes, HORIZONS):
+        g = b[b.h == h].reset_index(drop=True)
+        for i, r in g.iterrows():
+            col = "#2ca02c" if r.ci_high < 0 else ("#d62728" if r.ci_low > 0 else "#555555")
+            ax.plot([r.ci_low, r.ci_high], [i, i], color=col, lw=3)
+            ax.plot(r.delta_MAE, i, "o", color="k")
+        ax.axvline(0, color="k", lw=0.8, ls=":")
+        ax.set_yticks(range(len(g)), g.model)
+        ax.set_xlabel("ΔMAE = MAE(модель) - MAE(Naive), USD")
+        ax.set_title(f"95% интервал, блочный bootstrap, h={h}")
+    fig.tight_layout(); fig.savefig(FIGURES / "07_bootstrap_ci.png"); plt.close(fig)
+
+
+def write_metadata(origins, df, timing):
+    import lightgbm, matplotlib as mpl, scipy, statsmodels, torch
+    from data import sha256
+    raw = sorted(DATA_RAW.glob("*.csv"))[0]
+    meta = dict(
+        source_file=raw.name, source_sha256=sha256(raw),
+        rows=len(df), period=[str(df.date.iloc[0].date()), str(df.date.iloc[-1].date())],
+        test_origins=len(origins),
+        first_origin=str(df.date.iloc[origins[0]].date()), last_origin=str(df.date.iloc[origins[-1]].date()),
+        horizons=HORIZONS, refit_every=REFIT_EVERY, seeds=dict(main=config.SEED, nn=config.NN_SEEDS),
+        python=platform.python_version(), platform=platform.platform(),
+        versions=dict(numpy=np.__version__, pandas=pd.__version__, scipy=scipy.__version__,
+                      statsmodels=statsmodels.__version__, lightgbm=lightgbm.__version__,
+                      torch=torch.__version__, matplotlib=mpl.__version__),
+    )
+    (RESULTS / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2))
+
+
 def main():
     FIGURES.mkdir(parents=True, exist_ok=True)
     if any(DATA_RAW.glob("*.csv")):
@@ -171,6 +211,9 @@ def main():
     dm = dm_vs_baseline(pred)
     dm.to_csv(RESULTS / "dm_tests.csv", index=False, float_format="%.4f")
 
+    boot = bootstrap_vs_baseline(pred)
+    boot.to_csv(RESULTS / "bootstrap_ci.csv", index=False, float_format="%.4f")
+
     # --- устойчивость 1: подпериоды теста
     pred["block"] = pred.groupby(["model", "h"]).cumcount() // (TEST_SIZE // 3) + 1
     sub = metric_table(pred, by=("model", "h", "block"))
@@ -182,9 +225,10 @@ def main():
 
     # --- устойчивость 2: скользящее окно фиксированной длины (те же гиперпараметры)
     log(f"скользящее окно {ROLLING_WINDOW}")
-    roll_models = [(Drift(), 1), (ARIMA(), 1), (ETS(), 1),
-                   (LightGBM(params=info["LightGBM"]), 5),
-                   (GRU(lookback=info["GRU"]["lookback"], hidden=info["GRU"]["hidden"]), 20)]
+    roll_models = [(Drift(), REFIT_EVERY["Drift"]), (ARIMA(), REFIT_EVERY["ARIMA"]),
+                   (ETS(), REFIT_EVERY["ETS"]),
+                   (LightGBM(params=info["LightGBM"]), REFIT_EVERY["LightGBM"]),
+                   (GRU(lookback=info["GRU"]["lookback"], hidden=info["GRU"]["hidden"]), REFIT_EVERY["GRU"])]
     rp = [pred[pred.model == "Naive"]]
     for m, k in roll_models:
         rp.append(walk_forward(m, df, origins, refit_every=k, window=ROLLING_WINDOW)[0])
@@ -202,7 +246,14 @@ def main():
     plot_metrics(mt)
     plot_cum_error(pred)
     plot_seeds(mem_mt, mt)
-    log("Готово. Результаты в results/")
+    plot_bootstrap(boot)
+
+    log("проверка на утечку будущего")
+    leak = check_leakage.run(df, params=info)
+
+    write_metadata(origins, df, tm)
+    write_report()
+    log("Готово. Результаты в results/, сводка в results/REPORT.md")
 
 
 if __name__ == "__main__":
